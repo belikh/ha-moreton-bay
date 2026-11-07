@@ -67,3 +67,50 @@ def put_out_tonight(
         next_collection_date(bin_day, on_date + timedelta(days=1))
         == on_date + timedelta(days=1)
     )
+
+
+EPOCH = date(2026, 1, 5)
+
+
+def next_recycle_date(
+    bin_day: str,
+    recycle_week: str,
+    today: date,
+) -> date | None:
+    """Return the next date where recycling is collected.
+
+    General waste is weekly; recycling runs on the property's
+    Recycle_Week (WEEK 1 or WEEK 2) in the fortnightly cycle
+    anchored to EPOCH (Monday 2026-01-05 = WEEK 1).
+    """
+    nxt = next_collection_date(bin_day, today)
+    if nxt is None:
+        return None
+    for _ in range(3):
+        if is_recycle_week(recycle_week, nxt, EPOCH):
+            return nxt
+        nxt += timedelta(days=7)
+    return nxt
+
+
+def recycle_out_tonight(
+    bin_day: str,
+    recycle_week: str,
+    on_date: date,
+) -> bool:
+    """Return True if the recycling bin goes out tonight."""
+    return next_recycle_date(bin_day, recycle_week, on_date + timedelta(days=1)) == (
+        on_date + timedelta(days=1)
+    )
+
+
+def collection_type(
+    bin_day: str,
+    recycle_week: str,
+    on_date: date,
+) -> str:
+    """Return 'Recycling', 'Organics', or 'General only' for next collection."""
+    nxt = next_collection_date(bin_day, on_date)
+    if nxt is None:
+        return "Unknown"
+    return "Recycling" if is_recycle_week(recycle_week, nxt, EPOCH) else "Organics"

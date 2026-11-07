@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import MoretonBayCoordinator
 from .const import MODE_WASTE
-from .waste import put_out_tonight
+from .waste import put_out_tonight, recycle_out_tonight
 
 
 class MoretonBayWastePutOutTonightSensor(
@@ -52,6 +52,34 @@ class MoretonBayWastePutOutTonightSensor(
         }
 
 
+class MoretonBayWasteRecycleTonightSensor(
+    CoordinatorEntity[MoretonBayCoordinator], BinarySensorEntity
+):
+    """True when the recycling bin goes out tonight."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Recycling out tonight"
+    _attr_unique_id = "moreton_bay_waste_recycle_tonight"
+
+    def __init__(self, coordinator: MoretonBayCoordinator) -> None:
+        """Initialise the binary sensor."""
+        super().__init__(coordinator)
+
+    @property
+    def is_on(self) -> bool:
+        """Return whether recycling goes out tonight."""
+        waste = self.coordinator.waste or {}
+        bin_day = str(waste.get("Bin_Day") or "")
+        recycle_week = str(waste.get("Recycle_Week") or "")
+        try:
+            from zoneinfo import ZoneInfo
+
+            today = datetime.now(ZoneInfo("Australia/Brisbane")).date()
+        except Exception:  # noqa: BLE001 - fallback to UTC date
+            today = datetime.now().date()
+        return recycle_out_tonight(bin_day, recycle_week, today)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -61,4 +89,9 @@ async def async_setup_entry(
     coordinator: MoretonBayCoordinator = hass.data["moreton_bay"][entry.entry_id]
     if coordinator.mode != MODE_WASTE:
         return
-    async_add_entities([MoretonBayWastePutOutTonightSensor(coordinator)])
+    async_add_entities(
+        [
+            MoretonBayWastePutOutTonightSensor(coordinator),
+            MoretonBayWasteRecycleTonightSensor(coordinator),
+        ]
+    )

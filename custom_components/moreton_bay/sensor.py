@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import MoretonBayCoordinator
 from .const import MODE_NEARBY, MODE_WASTE
-from .waste import next_collection_date
+from .waste import collection_type, next_collection_date, next_recycle_date
 
 EPOCH = date(2026, 1, 5)
 
@@ -55,7 +55,7 @@ class MoretonBayLayerSensor(CoordinatorEntity[MoretonBayCoordinator], SensorEnti
 class MoretonBayWasteNextCollectionSensor(
     CoordinatorEntity[MoretonBayCoordinator], SensorEntity
 ):
-    """Sensor for the next bin collection date."""
+    """Sensor for the next general bin collection date."""
 
     _attr_has_entity_name = True
     _attr_device_class = None
@@ -69,15 +69,11 @@ class MoretonBayWasteNextCollectionSensor(
     @property
     def native_value(self) -> str | None:
         """Return the next collection date as ISO text."""
-        waste = self.coordinator.waste or {}
+        waste = self.coordinator.waste
+        if waste is None:
+            return "Not found — check address"
         bin_day = str(waste.get("Bin_Day") or "")
-        today = datetime.now(UTC).date()
-        try:
-            from zoneinfo import ZoneInfo
-
-            today = datetime.now(ZoneInfo("Australia/Brisbane")).date()
-        except Exception:  # noqa: BLE001 - fallback to UTC date
-            pass
+        today = self._today()
         nxt = next_collection_date(bin_day, today)
         return nxt.isoformat() if nxt else None
 
@@ -85,11 +81,68 @@ class MoretonBayWasteNextCollectionSensor(
     def extra_state_attributes(self) -> dict:
         """Return waste details."""
         waste = self.coordinator.waste or {}
+        today = self._today()
+        bin_day = str(waste.get("Bin_Day") or "")
+        recycle_week = str(waste.get("Recycle_Week") or "")
+        recycle_date = next_recycle_date(bin_day, recycle_week, today)
         return {
             "address": waste.get("ADDRESS"),
             "bin_day": waste.get("Bin_Day"),
             "recycle_week": waste.get("Recycle_Week"),
             "suburb": waste.get("Suburb"),
+            "collection_type_next": collection_type(bin_day, recycle_week, today),
+            "next_recycle_date": recycle_date.isoformat() if recycle_date else None,
+        }
+
+    @staticmethod
+    def _today() -> date:
+        """Return today in Brisbane time."""
+        try:
+            from zoneinfo import ZoneInfo
+
+            return datetime.now(ZoneInfo("Australia/Brisbane")).date()
+        except Exception:  # noqa: BLE001 - fallback to UTC date
+            return datetime.now(UTC).date()
+
+
+class MoretonBayWasteRecycleSensor(
+    CoordinatorEntity[MoretonBayCoordinator], SensorEntity
+):
+    """Sensor for the next recycling collection date."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Next recycling collection"
+    _attr_unique_id = "moreton_bay_waste_next_recycle"
+
+    def __init__(self, coordinator: MoretonBayCoordinator) -> None:
+        """Initialise the recycle sensor."""
+        super().__init__(coordinator)
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the next recycling date as ISO text."""
+        waste = self.coordinator.waste
+        if waste is None:
+            return "Not found — check address"
+        bin_day = str(waste.get("Bin_Day") or "")
+        recycle_week = str(waste.get("Recycle_Week") or "")
+        try:
+            from zoneinfo import ZoneInfo
+
+            today = datetime.now(ZoneInfo("Australia/Brisbane")).date()
+        except Exception:  # noqa: BLE001 - fallback to UTC date
+            today = datetime.now(UTC).date()
+        nxt = next_recycle_date(bin_day, recycle_week, today)
+        return nxt.isoformat() if nxt else None
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return recycle details."""
+        waste = self.coordinator.waste or {}
+        return {
+            "address": waste.get("ADDRESS"),
+            "bin_day": waste.get("Bin_Day"),
+            "recycle_week": waste.get("Recycle_Week"),
         }
 
 
@@ -217,6 +270,7 @@ async def async_setup_entry(
         entities.append(MoretonBayLayerSensor(coordinator, layer.title, layer.url))
     if coordinator.mode == MODE_WASTE:
         entities.append(MoretonBayWasteNextCollectionSensor(coordinator))
+        entities.append(MoretonBayWasteRecycleSensor(coordinator))
     if coordinator.mode == MODE_NEARBY:
         entities.append(MoretonBayDevAppStatusSensor(coordinator))
         entities.append(MoretonBayRoadClosureStatusSensor(coordinator))

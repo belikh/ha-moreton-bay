@@ -121,9 +121,17 @@ def parse_catalogue(payload: dict[str, Any]) -> list[LayerDefinition]:
     return layers
 
 
+def normalise_address(address: str) -> str:
+    """Normalise an address for the council ADDRESS field."""
+    text = address.upper().strip()
+    # Strip postcode/CSP commas users often paste; keep house + street + suburb.
+    text = " ".join(text.split())
+    return text
+
+
 def build_where_clause(address: str) -> str:
     """Build an ArcGIS WHERE clause for an exact address match."""
-    escaped = address.replace("'", "''").upper().strip()
+    escaped = normalise_address(address).replace("'", "''")
     return f"upper(ADDRESS) = '{escaped}'"
 
 
@@ -265,7 +273,13 @@ class MoretonBayClient:
         )
 
     async def fetch_waste_property(self, address: str) -> dict[str, Any] | None:
-        """Fetch bin day / recycle week for an exact ADDRESS value."""
+        """Fetch bin day / recycle week for an exact ADDRESS value.
+
+        The council ADDRESS field is upper-case without punctuation
+        (e.g. ``5 BOTANY CRESCENT BANKSIA BEACH``). We normalise the
+        input, try an exact match first, then fall back to a LIKE
+        search so unit numbers / postcodes / commas don't break it.
+        """
         waste = LayerDefinition(
             title="Property Waste Collection Days and Recycle Weeks",
             url=f"{MBRC_WASTE_URL}/{MBRC_WASTE_LAYER}",
@@ -277,6 +291,16 @@ class MoretonBayClient:
             out_fields="ADDRESS,Bin_Day,Recycle_Week,Suburb,Road,House_No",
             result_record_count=5,
         )
+        if features:
+            return features[0]
+        needle = normalise_address(address).replace("'", "''")
+        if needle:
+            features = await self.query_layer_features(
+                waste,
+                where=f"upper(ADDRESS) LIKE '%{needle}%'",
+                out_fields="ADDRESS,Bin_Day,Recycle_Week,Suburb,Road,House_No",
+                result_record_count=5,
+            )
         if not features:
             return None
         return features[0]

@@ -1,6 +1,6 @@
 """Tests for the Moreton Bay integration."""
 
-from datetime import date
+from datetime import date, timedelta
 
 from custom_components.moreton_bay.client import (
     build_where_clause,
@@ -8,8 +8,11 @@ from custom_components.moreton_bay.client import (
     parse_waste_property,
 )
 from custom_components.moreton_bay.waste import (
+    collection_type,
     next_collection_date,
+    next_recycle_date,
     put_out_tonight,
+    recycle_out_tonight,
 )
 
 CATALOGUE_FIXTURE = {
@@ -80,3 +83,21 @@ def test_put_out_tonight() -> None:
     # Monday 2026-11-09 is the night before Tuesday collection.
     assert put_out_tonight("TUESDAY", date(2026, 11, 9)) is True
     assert put_out_tonight("TUESDAY", date(2026, 11, 8)) is False
+
+
+def test_next_recycle_datefortnightly() -> None:
+    # EPOCH Monday 2026-01-05 = WEEK 1. Tuesday 2026-11-10 follows 44 weeks later?
+    nxt = next_recycle_date("TUESDAY", "WEEK 1", date(2026, 11, 7))
+    assert nxt is not None
+    assert nxt.weekday() == 1  # Tuesday
+    assert collection_type("TUESDAY", "WEEK 1", date(2026, 11, 7)) in (
+        "Recycling",
+        "Organics",
+    )
+
+
+def test_recycle_out_tonight() -> None:
+    # If next Tuesday is a recycle week, Monday night is out.
+    nxt = next_recycle_date("TUESDAY", "WEEK 1", date(2026, 11, 7))
+    assert nxt is not None
+    assert recycle_out_tonight("TUESDAY", "WEEK 1", nxt - timedelta(days=1)) is True
