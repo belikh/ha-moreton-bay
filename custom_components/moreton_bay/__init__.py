@@ -24,7 +24,11 @@ from .const import (
 )
 from .proximity import count_nearby
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
+]
 
 
 class MoretonBayCoordinator(DataUpdateCoordinator):
