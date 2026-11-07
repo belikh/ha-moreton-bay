@@ -1,0 +1,11 @@
+{
+  "domain": "moreton_bay",
+  "name": "City of Moreton Bay",
+  "codeowners": ["@belikh"],
+  "config_flow": true,
+  "documentation": "https://github.com/belikh/ha-moreton-bay",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/belikh/ha-moreton-bay/issues",
+  "version": "0.1.0"
+}

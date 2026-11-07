@@ -1,0 +1,114 @@
+"""The Moreton Bay integration."""
+
+from __future__ import annotations
+
+from datetime import timedelta
+
+from aiohttp import ClientSession
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+from .client import LayerDefinition, MoretonBayClient
+from .const import (
+    CONF_ADDRESS,
+    CONF_MODE,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    MODE_WASTE,
+)
+
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
+
+
+class MoretonBayCoordinator(DataUpdateCoordinator):
+    """Coordinate all Moreton Bay updates."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        session: ClientSession,
+        client: MoretonBayClient,
+    ) -> None:
+        """Initialise the coordinator."""
+        scan_hours = entry.options.get(
+            CONF_SCAN_INTERVAL,
+            int(DEFAULT_SCAN_INTERVAL.total_seconds() // 3600),
+        )
+        super().__init__(
+            hass,
+            logger=__import__("logging").getLogger(__name__),
+            name=DOMAIN,
+            update_interval=timedelta(hours=float(scan_hours)),
+        )
+        self.entry = entry
+        self.session = session
+        self.client = client
+        self.layers: list[LayerDefinition] = []
+        self.counts: dict[str, int] = {}
+        self.waste: dict | None = None
+
+    @property
+    def mode(self) -> str:
+        """Return the configured mode."""
+        return str(self.entry.options.get(CONF_MODE, ""))
+
+    @property
+    def address(self) -> str | None:
+        """Return the configured waste address, if any."""
+        value = self.entry.options.get(CONF_ADDRESS)
+        return str(value) if value else None
+
+    async def _async_update_data(self) -> dict:
+        """Fetch catalogue, layer counts, and waste for the address."""
+        self.layers = await self.client.fetch_catalogue()
+        self.counts = {}
+        for layer in self.layers:
+            try:
+                self.counts[layer.title] = (
+                    await self.client.query_layer_count(layer)
+                )
+            except Exception:  # noqa: BLE001 - best effort per layer
+                self.counts[layer.title] = 0
+        self.waste = None
+        if self.address and self.mode == MODE_WASTE:
+            self.waste = await self.client.fetch_waste_property(self.address)
+        return {
+            "layers": self.layers,
+            "counts": self.counts,
+            "waste": self.waste,
+        }
+
+
+def _scan_interval(entry: ConfigEntry) -> timedelta:
+    """Return the configured scan interval."""
+    hours = entry.options.get(CONF_SCAN_INTERVAL)
+    if isinstance(hours, (int, float)) and hours > 0:
+        return timedelta(hours=float(hours))
+    return DEFAULT_SCAN_INTERVAL
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Moreton Bay from a config entry."""
+    session = async_get_clientsession(hass)
+    client = MoretonBayClient(session)
+    coordinator = MoretonBayCoordinator(hass, entry, session, client)
+    await coordinator.async_config_entry_first_refresh()
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry, PLATFORMS
+    )
+    if unload_ok:
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+    return unload_ok

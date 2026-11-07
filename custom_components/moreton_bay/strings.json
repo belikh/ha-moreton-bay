@@ -1,0 +1,1 @@
+{"config": {"title": "City of Moreton Bay", "abort": {"already_configured": "This instance is already configured."}, "error": {"address_required": "Address is required.", "title_required": "Layer title is required."}}, "entity": {}, "selector": {}, "options": {"step": {"init": {"title": "Moreton Bay options", "description": "Adjust the refresh interval."}}}}
