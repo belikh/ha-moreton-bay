@@ -7,11 +7,12 @@ from datetime import UTC, date, datetime
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import MoretonBayCoordinator
-from .const import MODE_NEARBY, MODE_WASTE
+from .const import DOMAIN
 from .waste import collection_type, next_collection_date, next_recycle_date
 
 EPOCH = date(2026, 1, 5)
@@ -30,6 +31,13 @@ class MoretonBayLayerSensor(CoordinatorEntity[MoretonBayCoordinator], SensorEnti
     ) -> None:
         """Initialise with the layer title and source URL."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
         self._layer_title = layer_title
         self._source_url = source_url
         slug = layer_title.lower().replace(" ", "_")
@@ -65,6 +73,13 @@ class MoretonBayWasteNextCollectionSensor(
     def __init__(self, coordinator: MoretonBayCoordinator) -> None:
         """Initialise the waste sensor."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
 
     @property
     def native_value(self) -> str | None:
@@ -117,6 +132,13 @@ class MoretonBayWasteRecycleSensor(
     def __init__(self, coordinator: MoretonBayCoordinator) -> None:
         """Initialise the recycle sensor."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
 
     @property
     def native_value(self) -> str | None:
@@ -158,6 +180,13 @@ class MoretonBayDevAppStatusSensor(
     def __init__(self, coordinator: MoretonBayCoordinator) -> None:
         """Initialise the status sensor."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
 
     @property
     def native_value(self) -> str | None:
@@ -196,6 +225,13 @@ class MoretonBayRoadClosureStatusSensor(
     def __init__(self, coordinator: MoretonBayCoordinator) -> None:
         """Initialise the status sensor."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
 
     @property
     def native_value(self) -> str | None:
@@ -233,6 +269,13 @@ class MoretonBayEmergencyStatusSensor(
     def __init__(self, coordinator: MoretonBayCoordinator) -> None:
         """Initialise the status sensor."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
 
     @property
     def native_value(self) -> str | None:
@@ -268,10 +311,10 @@ async def async_setup_entry(
     entities: list[SensorEntity] = []
     for layer in coordinator.layers:
         entities.append(MoretonBayLayerSensor(coordinator, layer.title, layer.url))
-    if coordinator.mode == MODE_WASTE:
+    if True:  # single mode
         entities.append(MoretonBayWasteNextCollectionSensor(coordinator))
         entities.append(MoretonBayWasteRecycleSensor(coordinator))
-    if coordinator.mode == MODE_NEARBY:
+    if True:  # single mode (nearby)
         entities.append(MoretonBayDevAppStatusSensor(coordinator))
         entities.append(MoretonBayRoadClosureStatusSensor(coordinator))
         entities.append(MoretonBayEmergencyStatusSensor(coordinator))

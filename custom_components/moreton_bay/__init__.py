@@ -14,7 +14,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .client import LayerDefinition, MoretonBayClient
 from .const import (
     CONF_ADDRESS,
-    CONF_MODE,
     CONF_RADIUS_KM,
     CONF_SCAN_INTERVAL,
     CONF_ZONE,
@@ -22,8 +21,6 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_ZONE,
     DOMAIN,
-    MODE_NEARBY,
-    MODE_WASTE,
 )
 from .proximity import count_nearby
 
@@ -63,25 +60,31 @@ class MoretonBayCoordinator(DataUpdateCoordinator):
 
     @property
     def zone_entity(self) -> str:
-        """Return the configured zone entity id."""
-        value = self.entry.options.get(CONF_ZONE, DEFAULT_ZONE)
+        """Return the configured zone entity id (data or options)."""
+        value = self.entry.data.get(CONF_ZONE) or self.entry.options.get(
+            CONF_ZONE, DEFAULT_ZONE
+        )
         return str(value)
 
     @property
     def radius_km(self) -> float:
-        """Return the configured radius in kilometres."""
-        value = self.entry.options.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM)
+        """Return the configured radius in kilometres (data or options)."""
+        value = self.entry.data.get(CONF_RADIUS_KM) or self.entry.options.get(
+            CONF_RADIUS_KM, DEFAULT_RADIUS_KM
+        )
         return float(value) if isinstance(value, (int, float)) else DEFAULT_RADIUS_KM
 
     @property
     def mode(self) -> str:
-        """Return the configured mode."""
-        return str(self.entry.options.get(CONF_MODE, ""))
+        """Single-mode entry — always returns the unified mode."""
+        return "single"
 
     @property
     def address(self) -> str | None:
-        """Return the configured waste address, if any."""
-        value = self.entry.options.get(CONF_ADDRESS)
+        """Return the configured waste address override, if any."""
+        value = self.entry.data.get(CONF_ADDRESS) or self.entry.options.get(
+            CONF_ADDRESS
+        )
         return str(value) if value else None
 
     async def _async_update_data(self) -> dict:
@@ -94,14 +97,23 @@ class MoretonBayCoordinator(DataUpdateCoordinator):
             except Exception:  # noqa: BLE001 - best effort per layer
                 self.counts[layer.title] = 0
         self.waste = None
-        if self.address and self.mode == MODE_WASTE:
+        if self.address:
             self.waste = await self.client.fetch_waste_property(self.address)
         self.nearby = []
         self.road_closures = []
         self.emergency_sites = []
-        if self.mode == MODE_NEARBY:
+        if True:
             zone_state = self.hass.states.get(self.zone_entity)
             if zone_state is not None:
+                if self.waste is None:
+                    try:
+                        _zlat = float(zone_state.attributes["latitude"])
+                        _zlon = float(zone_state.attributes["longitude"])
+                        self.waste = await self.client.fetch_waste_for_zone(
+                            _zlat, _zlon
+                        )
+                    except Exception:  # noqa: BLE001 - waste is optional
+                        pass
                 try:
                     latitude = float(zone_state.attributes["latitude"])
                     longitude = float(zone_state.attributes["longitude"])
@@ -170,3 +182,24 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok
+
+
+async def async_get_config_entry_diagnostics(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> dict:
+    """Return diagnostics for the config entry."""
+    coordinator: MoretonBayCoordinator | None = hass.data.get(DOMAIN, {}).get(
+        entry.entry_id
+    )
+    if coordinator is None:
+        return {"configured": False, "entry_id": entry.entry_id}
+    return {
+        "configured": True,
+        "entry_id": entry.entry_id,
+        "zone": coordinator.zone_entity,
+        "radius_km": coordinator.radius_km,
+        "layers": [layer.title for layer in coordinator.layers],
+        "counts": coordinator.counts,
+        "waste": coordinator.waste is not None,
+        "nearby": coordinator.nearby[:3] if coordinator.nearby else [],
+    }

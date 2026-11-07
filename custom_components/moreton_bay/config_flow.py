@@ -1,4 +1,4 @@
-"""Config flow for City of Moreton Bay."""
+"""Config flow for City of Moreton Bay — single mode."""
 
 from __future__ import annotations
 
@@ -9,16 +9,18 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.helpers.selector import (
-    SelectOptionDict,
-    SelectSelector,
-    SelectSelectorConfig,
-    SelectSelectorMode,
+    EntitySelector,
+    EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
 )
 
 from .const import (
     CONF_ADDRESS,
-    CONF_LAYER_TITLE,
-    CONF_MODE,
     CONF_RADIUS_KM,
     CONF_SCAN_INTERVAL,
     CONF_ZONE,
@@ -27,171 +29,67 @@ from .const import (
     DOMAIN,
     MAX_SCAN_INTERVAL_HOURS,
     MIN_SCAN_INTERVAL_HOURS,
-    MODE_ALL_LAYERS,
-    MODE_NEARBY,
-    MODE_SINGLE_LAYER,
-    MODE_WASTE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-_MODE_OPTIONS: list[SelectOptionDict] = [
-    {"value": MODE_ALL_LAYERS, "label": "All Datahub layers"},
-    {"value": MODE_WASTE, "label": "Property waste collection days"},
-    {"value": MODE_SINGLE_LAYER, "label": "Single Datahub layer"},
-    {"value": MODE_NEARBY, "label": "Nearby status (zone)"},
-]
-
-MODE_SCHEMA = vol.Schema(
+SETUP_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_MODE): SelectSelector(
-            SelectSelectorConfig(
-                options=_MODE_OPTIONS,
-                mode=SelectSelectorMode.DROPDOWN,
+        vol.Required(CONF_ZONE, default=DEFAULT_ZONE): EntitySelector(
+            EntitySelectorConfig(domain="zone", multiple=False)
+        ),
+        vol.Required(CONF_RADIUS_KM, default=DEFAULT_RADIUS_KM): NumberSelector(
+            NumberSelectorConfig(
+                min=0.1,
+                max=50.0,
+                step=0.1,
+                unit_of_measurement="km",
+                mode=NumberSelectorMode.BOX,
             )
         ),
-    }
-)
-
-WASTE_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_ADDRESS): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=6): vol.All(
-            int, vol.Range(min=MIN_SCAN_INTERVAL_HOURS, max=MAX_SCAN_INTERVAL_HOURS)
+        vol.Optional(CONF_SCAN_INTERVAL, default=6): NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_SCAN_INTERVAL_HOURS,
+                max=MAX_SCAN_INTERVAL_HOURS,
+                step=1.0,
+                unit_of_measurement="hours",
+                mode=NumberSelectorMode.BOX,
+            )
         ),
-    }
-)
-
-NEARBY_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_ZONE, default=DEFAULT_ZONE): str,
-        vol.Required(CONF_RADIUS_KM, default=DEFAULT_RADIUS_KM): float,
-        vol.Optional(CONF_SCAN_INTERVAL, default=6): vol.All(
-            int, vol.Range(min=MIN_SCAN_INTERVAL_HOURS, max=MAX_SCAN_INTERVAL_HOURS)
-        ),
-    }
-)
-
-SINGLE_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_LAYER_TITLE): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=6): vol.All(
-            int, vol.Range(min=MIN_SCAN_INTERVAL_HOURS, max=MAX_SCAN_INTERVAL_HOURS)
+        vol.Optional(CONF_ADDRESS, default=""): TextSelector(
+            TextSelectorConfig(type=TextSelectorType.TEXT)
         ),
     }
 )
 
 
 class MoretonBayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle config flow for Moreton Bay."""
+    """Handle the single-mode config flow for Moreton Bay."""
 
     VERSION = 1
-
-    def __init__(self) -> None:
-        """Initialise the flow."""
-        self._mode: str = MODE_ALL_LAYERS
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Let the user pick a mode."""
+        """Show the single setup step."""
         if user_input is not None:
-            self._mode = str(user_input[CONF_MODE])
-            if self._mode == MODE_WASTE:
-                return await self.async_step_waste()
-            if self._mode == MODE_SINGLE_LAYER:
-                return await self.async_step_single()
-            if self._mode == MODE_NEARBY:
-                return await self.async_step_nearby()
-            return await self.async_step_all()
-        return self.async_show_form(step_id="user", data_schema=MODE_SCHEMA)
-
-    async def async_step_all(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Create an all-layers entry."""
-        if user_input is not None:
+            zone = str(user_input.get(CONF_ZONE) or DEFAULT_ZONE)
+            radius = float(user_input.get(CONF_RADIUS_KM) or DEFAULT_RADIUS_KM)
+            address = str(user_input.get(CONF_ADDRESS) or "").strip()
+            data: dict[str, Any] = {CONF_ZONE: zone, CONF_RADIUS_KM: radius}
+            if address:
+                data[CONF_ADDRESS] = address.upper()
+            scan_interval = user_input.get(CONF_SCAN_INTERVAL, 6)
+            try:
+                scan_interval = int(float(scan_interval))
+            except TypeError, ValueError:
+                scan_interval = 6
             return self.async_create_entry(
-                title="City of Moreton Bay (all layers)",
-                data={CONF_MODE: MODE_ALL_LAYERS},
-                options={
-                    CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 6),
-                },
+                title=f"City of Moreton Bay — {zone}",
+                data=data,
+                options={CONF_SCAN_INTERVAL: scan_interval},
             )
-        return self.async_show_form(
-            step_id="all",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(CONF_SCAN_INTERVAL, default=6): vol.All(
-                        int,
-                        vol.Range(
-                            min=MIN_SCAN_INTERVAL_HOURS,
-                            max=MAX_SCAN_INTERVAL_HOURS,
-                        ),
-                    )
-                }
-            ),
-        )
-
-    async def async_step_waste(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Create a waste entry for one address."""
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            address = str(user_input[CONF_ADDRESS]).strip()
-            if not address:
-                errors[CONF_ADDRESS] = "address_required"
-            else:
-                return self.async_create_entry(
-                    title=f"Moreton Bay waste — {address}",
-                    data={CONF_MODE: MODE_WASTE, CONF_ADDRESS: address.upper()},
-                    options={
-                        CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 6),
-                    },
-                )
-        return self.async_show_form(
-            step_id="waste", data_schema=WASTE_SCHEMA, errors=errors
-        )
-
-    async def async_step_single(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Create a single-layer entry."""
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            title = str(user_input[CONF_LAYER_TITLE]).strip()
-            if not title:
-                errors[CONF_LAYER_TITLE] = "title_required"
-            else:
-                return self.async_create_entry(
-                    title=f"Moreton Bay — {title}",
-                    data={CONF_MODE: MODE_SINGLE_LAYER, CONF_LAYER_TITLE: title},
-                    options={
-                        CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 6),
-                    },
-                )
-        return self.async_show_form(
-            step_id="single", data_schema=SINGLE_SCHEMA, errors=errors
-        )
-
-    async def async_step_nearby(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Create a nearby-status entry using an HA zone."""
-        if user_input is not None:
-            return self.async_create_entry(
-                title=f"Moreton Bay nearby — {user_input[CONF_ZONE]}",
-                data={
-                    CONF_MODE: MODE_NEARBY,
-                    CONF_ZONE: user_input[CONF_ZONE],
-                    CONF_RADIUS_KM: user_input[CONF_RADIUS_KM],
-                },
-                options={
-                    CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 6),
-                },
-            )
-        return self.async_show_form(step_id="nearby", data_schema=NEARBY_SCHEMA)
+        return self.async_show_form(step_id="user", data_schema=SETUP_SCHEMA)
 
 
 class MoretonBayOptionsFlow(config_entries.OptionsFlow):
@@ -206,18 +104,27 @@ class MoretonBayOptionsFlow(config_entries.OptionsFlow):
     ) -> ConfigFlowResult:
         """Manage options."""
         if user_input is not None:
+            scan_interval = user_input.get(CONF_SCAN_INTERVAL, 6)
+            try:
+                scan_interval = int(float(scan_interval))
+            except TypeError, ValueError:
+                pass
+            else:
+                user_input = {**user_input, CONF_SCAN_INTERVAL: scan_interval}
             return self.async_create_entry(title="", data=user_input)
         schema = vol.Schema(
             {
                 vol.Optional(
                     CONF_SCAN_INTERVAL,
                     default=self._entry.options.get(CONF_SCAN_INTERVAL, 6),
-                ): vol.All(
-                    int,
-                    vol.Range(
+                ): NumberSelector(
+                    NumberSelectorConfig(
                         min=MIN_SCAN_INTERVAL_HOURS,
                         max=MAX_SCAN_INTERVAL_HOURS,
-                    ),
+                        step=1.0,
+                        unit_of_measurement="hours",
+                        mode=NumberSelectorMode.BOX,
+                    )
                 )
             }
         )

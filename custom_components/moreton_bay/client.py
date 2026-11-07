@@ -272,6 +272,37 @@ class MoretonBayClient:
             "NAME,SUBURB,DETAILS,Status,CAPACITY,ADDRESS",
         )
 
+    async def fetch_waste_for_zone(
+        self, latitude: float, longitude: float
+    ) -> dict[str, Any] | None:
+        """Find the nearest waste property to a coordinate.
+
+        Queries the waste polygon layer with a small envelope
+        around the zone centre at WGS84.
+        """
+        waste = LayerDefinition(
+            title="Property Waste Collection Days and Recycle Weeks",
+            url=f"{MBRC_WASTE_URL}/{MBRC_WASTE_LAYER}",
+            layer=MBRC_WASTE_LAYER,
+        )
+        deg = 0.05
+        envelope = (
+            f"{longitude - deg},{latitude - deg},{longitude + deg},{latitude + deg}"
+        )
+        payload = await self._query(
+            waste.query_url(),
+            {
+                "geometry": envelope,
+                "geometryType": "esriGeometryEnvelope",
+                "inSR": "4326",
+                "outSR": "4326",
+                "outFields": "ADDRESS,Bin_Day,Recycle_Week,Suburb,Road,House_No",
+                "returnGeometry": "false",
+                "resultRecordCount": "5",
+            },
+        )
+        return parse_waste_property(payload)
+
     async def fetch_waste_property(self, address: str) -> dict[str, Any] | None:
         """Fetch bin day / recycle week for an exact ADDRESS value.
 

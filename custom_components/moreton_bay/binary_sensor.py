@@ -7,11 +7,12 @@ from datetime import datetime
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import MoretonBayCoordinator
-from .const import MODE_WASTE
+from .const import DOMAIN
 from .waste import put_out_tonight, recycle_out_tonight
 
 
@@ -27,6 +28,13 @@ class MoretonBayWastePutOutTonightSensor(
     def __init__(self, coordinator: MoretonBayCoordinator) -> None:
         """Initialise the binary sensor."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
 
     @property
     def is_on(self) -> bool:
@@ -64,6 +72,13 @@ class MoretonBayWasteRecycleTonightSensor(
     def __init__(self, coordinator: MoretonBayCoordinator) -> None:
         """Initialise the binary sensor."""
         super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DOMAIN)},
+            name="City of Moreton Bay",
+            manufacturer="belikh",
+            model="Moreton Bay Integration",
+            configuration_url="https://github.com/belikh/ha-moreton-bay",
+        )
 
     @property
     def is_on(self) -> bool:
@@ -87,8 +102,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Moreton Bay binary sensors from a config entry."""
     coordinator: MoretonBayCoordinator = hass.data["moreton_bay"][entry.entry_id]
-    if coordinator.mode != MODE_WASTE:
-        return
+    # single mode: always set up
     async_add_entities(
         [
             MoretonBayWastePutOutTonightSensor(coordinator),

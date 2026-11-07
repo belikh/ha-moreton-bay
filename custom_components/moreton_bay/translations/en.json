@@ -4,35 +4,10 @@
       "user": {
         "title": "City of Moreton Bay",
         "data": {
-          "mode": "Mode"
-        }
-      },
-      "all": {
-        "title": "All layers",
-        "data": {
-          "scan_interval_hours": "Refresh interval (hours)"
-        }
-      },
-      "waste": {
-        "title": "Waste collection days",
-        "data": {
-          "address": "Address",
-          "scan_interval_hours": "Refresh interval (hours)"
-        }
-      },
-      "single": {
-        "title": "Single layer",
-        "data": {
-          "layer_title": "Layer title",
-          "scan_interval_hours": "Refresh interval (hours)"
-        }
-      },
-      "nearby": {
-        "title": "Nearby status",
-        "data": {
-          "zone": "Zone",
+          "zone": "Zone (status + auto waste)",
           "radius_km": "Radius (km)",
-          "scan_interval_hours": "Refresh interval (hours)"
+          "scan_interval_hours": "Refresh interval (hours)",
+          "address": "Waste address override (leave blank = use zone)"
         }
       }
     },
