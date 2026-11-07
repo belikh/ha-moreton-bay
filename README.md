@@ -59,3 +59,6 @@ hassfest can be run with
 ## Licence
 
 MIT. Data © City of Moreton Bay, CC-BY 4.0. Unofficial; not endorsed by the council.
+
+
+## v0.1.1 — Curated: planning-scheme/LGIP/superseded/historic/notes/basemap layers removed — 83 -> 31 sensors.

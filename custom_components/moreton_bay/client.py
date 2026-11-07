@@ -57,6 +57,27 @@ class CatalogueResult:
     fetched_at: str = ""
 
 
+JUNK_TITLE_SUBSTRINGS = (
+    "planning scheme",
+    "lgip",
+    "superseded",
+    "historic",
+    "_notes_",
+    "notes_polygon",
+    "notes-polygon",
+    "community basemap",
+    "hydrographic survey",
+    "council assets",
+    "underground assets",
+)
+
+
+def is_junk_title(title: str) -> bool:
+    """Return True if a dataset is a static planning/notes layer."""
+    lowered = title.lower()
+    return any(token in lowered for token in JUNK_TITLE_SUBSTRINGS)
+
+
 def parse_catalogue(payload: dict[str, Any]) -> list[LayerDefinition]:
     """Parse an ArcGIS Hub catalogue GeoJSON payload into layers.
 
@@ -69,6 +90,8 @@ def parse_catalogue(payload: dict[str, Any]) -> list[LayerDefinition]:
         title = (props.get("title") or props.get("name") or "").strip()
         url = (props.get("url") or "").strip()
         if not title or not url:
+            continue
+        if is_junk_title(title):
             continue
         description = (props.get("snippet") or props.get("description") or "").strip()
         raw_categories = props.get("category") or props.get("categories") or []
