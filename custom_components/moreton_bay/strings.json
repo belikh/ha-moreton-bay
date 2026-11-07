@@ -1,1 +1,49 @@
-{"config": {"title": "City of Moreton Bay", "abort": {"already_configured": "This instance is already configured."}, "error": {"address_required": "Address is required.", "title_required": "Layer title is required."}}, "entity": {}, "selector": {}, "options": {"step": {"init": {"title": "Moreton Bay options", "description": "Adjust the refresh interval."}}}}
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "City of Moreton Bay",
+        "data": {
+          "mode": "Mode"
+        }
+      },
+      "all": {
+        "title": "All layers",
+        "data": {
+          "scan_interval_hours": "Refresh interval (hours)"
+        }
+      },
+      "waste": {
+        "title": "Waste collection days",
+        "data": {
+          "address": "Address",
+          "scan_interval_hours": "Refresh interval (hours)"
+        }
+      },
+      "single": {
+        "title": "Single layer",
+        "data": {
+          "layer_title": "Layer title",
+          "scan_interval_hours": "Refresh interval (hours)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This instance is already configured."
+    },
+    "error": {
+      "address_required": "Address is required.",
+      "title_required": "Layer title is required."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Moreton Bay options",
+        "data": {
+          "scan_interval_hours": "Refresh interval (hours)"
+        }
+      }
+    }
+  }
+}

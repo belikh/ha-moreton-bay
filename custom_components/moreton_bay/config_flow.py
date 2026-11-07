@@ -156,3 +156,40 @@ class MoretonBayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="single", data_schema=SINGLE_SCHEMA, errors=errors
         )
+
+
+class MoretonBayOptionsFlow(config_entries.OptionsFlow):
+    """Handle options flow for Moreton Bay."""
+
+    def __init__(self, entry: config_entries.ConfigEntry) -> None:
+        """Initialise the options flow."""
+        self._entry = entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_SCAN_INTERVAL,
+                    default=self._entry.options.get(CONF_SCAN_INTERVAL, 6),
+                ): vol.All(
+                    int,
+                    vol.Range(
+                        min=MIN_SCAN_INTERVAL_HOURS,
+                        max=MAX_SCAN_INTERVAL_HOURS,
+                    ),
+                )
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)
+
+
+def async_get_options_flow(
+    entry: config_entries.ConfigEntry,
+) -> MoretonBayOptionsFlow:
+    """Return the options flow handler."""
+    return MoretonBayOptionsFlow(entry)
