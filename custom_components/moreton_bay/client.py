@@ -183,13 +183,88 @@ class MoretonBayClient:
             },
         )
         return [
-            dict(item.get("attributes") or {})
-            for item in payload.get("features") or []
+            dict(item.get("attributes") or {}) for item in payload.get("features") or []
         ]
 
-    async def fetch_waste_property(
-        self, address: str
-    ) -> dict[str, Any] | None:
+    async def _fetch_nearby_features(
+        self,
+        url: str,
+        layer_id: int,
+        centre_latitude: float,
+        centre_longitude: float,
+        radius_km: float,
+        out_fields: str,
+    ) -> list[dict[str, Any]]:
+        """Fetch features in an envelope around a coordinate (WGS84)."""
+        definition = LayerDefinition(title="nearby", url=url, layer=layer_id)
+        deg = radius_km / 111.0
+        envelope = (
+            f"{centre_longitude - deg},{centre_latitude - deg},"
+            f"{centre_longitude + deg},{centre_latitude + deg}"
+        )
+        payload = await self._query(
+            definition.query_url(),
+            {
+                "geometry": envelope,
+                "geometryType": "esriGeometryEnvelope",
+                "inSR": "4326",
+                "outSR": "4326",
+                "outFields": out_fields,
+                "returnGeometry": "true",
+                "resultRecordCount": "200",
+            },
+        )
+        return [dict(item) for item in payload.get("features") or []]
+
+    async def fetch_development_applications(
+        self,
+        centre_latitude: float,
+        centre_longitude: float,
+        radius_km: float,
+    ) -> list[dict[str, Any]]:
+        """Development applications near a coordinate (status feed)."""
+        return await self._fetch_nearby_features(
+            "https://services-ap1.arcgis.com/152ojN3Ts9H3cdtl/arcgis/rest/services/MyStreet/FeatureServer/0",
+            0,
+            centre_latitude,
+            centre_longitude,
+            radius_km,
+            "FORMATTED_APPLICATION_NUMBER,DESCRIPTION,STATUS_DESCRIPTION,LODGED_DATE,TYPE_DESCRIPTION",
+        )
+
+    async def fetch_road_closures(
+        self,
+        centre_latitude: float,
+        centre_longitude: float,
+        radius_km: float,
+    ) -> list[dict[str, Any]]:
+        """Weather-impacted road closures near a coordinate."""
+        return await self._fetch_nearby_features(
+            "https://services-ap1.arcgis.com/152ojN3Ts9H3cdtl/arcgis/rest/services/RoadClosureProdView/FeatureServer/0",
+            0,
+            centre_latitude,
+            centre_longitude,
+            radius_km,
+            "STATUS,REASON,ROAD,SUBURB,UPDATETIME",
+        )
+
+    async def fetch_emergency_sites(
+        self,
+        centre_latitude: float,
+        centre_longitude: float,
+        radius_km: float,
+    ) -> list[dict[str, Any]]:
+        """Sandbag / evacuation sites near a coordinate."""
+        return await self._fetch_nearby_features(
+            "https://services-ap1.arcgis.com/152ojN3Ts9H3cdtl/arcgis/rest/services/MBRC_Sandbag_Locations_and_Evacuation_Centres_(Open)/FeatureServer/0",
+            0,
+            centre_latitude,
+            centre_longitude,
+            radius_km,
+            "NAME,SUBURB,DETAILS,Status,CAPACITY,ADDRESS",
+        )
+
+    async def fetch_waste_property(self, address: str) -> dict[str, Any] | None:
         """Fetch bin day / recycle week for an exact ADDRESS value."""
         waste = LayerDefinition(
             title="Property Waste Collection Days and Recycle Weeks",
@@ -206,9 +281,7 @@ class MoretonBayClient:
             return None
         return features[0]
 
-    async def _query(
-        self, url: str, params: dict[str, str]
-    ) -> dict[str, Any]:
+    async def _query(self, url: str, params: dict[str, str]) -> dict[str, Any]:
         """GET an ArcGIS REST endpoint and return parsed JSON."""
         merged = dict(params)
         merged["f"] = "pjson"

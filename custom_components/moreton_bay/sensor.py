@@ -11,15 +11,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import MoretonBayCoordinator
-from .const import MODE_WASTE
+from .const import MODE_NEARBY, MODE_WASTE
 from .waste import next_collection_date
 
 EPOCH = date(2026, 1, 5)
 
 
-class MoretonBayLayerSensor(
-    CoordinatorEntity[MoretonBayCoordinator], SensorEntity
-):
+class MoretonBayLayerSensor(CoordinatorEntity[MoretonBayCoordinator], SensorEntity):
     """Sensor exposing the feature count for one Datahub layer."""
 
     _attr_has_entity_name = True
@@ -95,6 +93,118 @@ class MoretonBayWasteNextCollectionSensor(
         }
 
 
+class MoretonBayDevAppStatusSensor(
+    CoordinatorEntity[MoretonBayCoordinator], SensorEntity
+):
+    """Status of the nearest development application."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Development application (nearest)"
+    _attr_unique_id = "moreton_bay_dev_app_status"
+
+    def __init__(self, coordinator: MoretonBayCoordinator) -> None:
+        """Initialise the status sensor."""
+        super().__init__(coordinator)
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the nearest application's status."""
+        nearby = self.coordinator.nearby
+        if not nearby:
+            return "None nearby"
+        return str(nearby[0].get("STATUS_DESCRIPTION") or "Unknown")
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return the nearest application details."""
+        nearby = self.coordinator.nearby
+        if not nearby:
+            return {"count": 0, "radius_km": self.coordinator.radius_km}
+        nearest = nearby[0]
+        return {
+            "count": len(nearby),
+            "radius_km": self.coordinator.radius_km,
+            "application": nearest.get("FORMATTED_APPLICATION_NUMBER"),
+            "description": nearest.get("DESCRIPTION"),
+            "lodged_date": nearest.get("LODGED_DATE"),
+            "distance_km": nearest.get("distance_km"),
+        }
+
+
+class MoretonBayRoadClosureStatusSensor(
+    CoordinatorEntity[MoretonBayCoordinator], SensorEntity
+):
+    """Status of the nearest weather-impacted road closure."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Road closure (nearest)"
+    _attr_unique_id = "moreton_bay_road_closure_status"
+
+    def __init__(self, coordinator: MoretonBayCoordinator) -> None:
+        """Initialise the status sensor."""
+        super().__init__(coordinator)
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the nearest closure status."""
+        closures = self.coordinator.road_closures
+        if not closures:
+            return "None nearby"
+        return str(closures[0].get("STATUS") or "Unknown")
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return the nearest closure details."""
+        closures = self.coordinator.road_closures
+        if not closures:
+            return {"radius_km": self.coordinator.radius_km}
+        nearest = closures[0]
+        return {
+            "radius_km": self.coordinator.radius_km,
+            "road": nearest.get("ROAD"),
+            "reason": nearest.get("REASON"),
+            "suburb": nearest.get("SUBURB"),
+            "distance_km": nearest.get("distance_km"),
+        }
+
+
+class MoretonBayEmergencyStatusSensor(
+    CoordinatorEntity[MoretonBayCoordinator], SensorEntity
+):
+    """Status of the nearest sandbag / evacuation site."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Emergency site (nearest)"
+    _attr_unique_id = "moreton_bay_emergency_status"
+
+    def __init__(self, coordinator: MoretonBayCoordinator) -> None:
+        """Initialise the status sensor."""
+        super().__init__(coordinator)
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the nearest emergency site status."""
+        sites = self.coordinator.emergency_sites
+        if not sites:
+            return "None nearby"
+        return str(sites[0].get("Status") or "Unknown")
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return the nearest emergency site details."""
+        sites = self.coordinator.emergency_sites
+        if not sites:
+            return {"radius_km": self.coordinator.radius_km}
+        nearest = sites[0]
+        return {
+            "radius_km": self.coordinator.radius_km,
+            "name": nearest.get("NAME"),
+            "address": nearest.get("ADDRESS"),
+            "details": nearest.get("DETAILS"),
+            "distance_km": nearest.get("distance_km"),
+        }
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -104,9 +214,11 @@ async def async_setup_entry(
     coordinator: MoretonBayCoordinator = hass.data["moreton_bay"][entry.entry_id]
     entities: list[SensorEntity] = []
     for layer in coordinator.layers:
-        entities.append(
-            MoretonBayLayerSensor(coordinator, layer.title, layer.url)
-        )
+        entities.append(MoretonBayLayerSensor(coordinator, layer.title, layer.url))
     if coordinator.mode == MODE_WASTE:
         entities.append(MoretonBayWasteNextCollectionSensor(coordinator))
+    if coordinator.mode == MODE_NEARBY:
+        entities.append(MoretonBayDevAppStatusSensor(coordinator))
+        entities.append(MoretonBayRoadClosureStatusSensor(coordinator))
+        entities.append(MoretonBayEmergencyStatusSensor(coordinator))
     async_add_entities(entities)

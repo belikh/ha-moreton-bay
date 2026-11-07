@@ -19,11 +19,16 @@ from .const import (
     CONF_ADDRESS,
     CONF_LAYER_TITLE,
     CONF_MODE,
+    CONF_RADIUS_KM,
     CONF_SCAN_INTERVAL,
+    CONF_ZONE,
+    DEFAULT_RADIUS_KM,
+    DEFAULT_ZONE,
     DOMAIN,
     MAX_SCAN_INTERVAL_HOURS,
     MIN_SCAN_INTERVAL_HOURS,
     MODE_ALL_LAYERS,
+    MODE_NEARBY,
     MODE_SINGLE_LAYER,
     MODE_WASTE,
 )
@@ -34,6 +39,7 @@ _MODE_OPTIONS: list[SelectOptionDict] = [
     {"value": MODE_ALL_LAYERS, "label": "All Datahub layers"},
     {"value": MODE_WASTE, "label": "Property waste collection days"},
     {"value": MODE_SINGLE_LAYER, "label": "Single Datahub layer"},
+    {"value": MODE_NEARBY, "label": "Nearby status (zone)"},
 ]
 
 MODE_SCHEMA = vol.Schema(
@@ -50,6 +56,16 @@ MODE_SCHEMA = vol.Schema(
 WASTE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_ADDRESS): str,
+        vol.Optional(CONF_SCAN_INTERVAL, default=6): vol.All(
+            int, vol.Range(min=MIN_SCAN_INTERVAL_HOURS, max=MAX_SCAN_INTERVAL_HOURS)
+        ),
+    }
+)
+
+NEARBY_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_ZONE, default=DEFAULT_ZONE): str,
+        vol.Required(CONF_RADIUS_KM, default=DEFAULT_RADIUS_KM): float,
         vol.Optional(CONF_SCAN_INTERVAL, default=6): vol.All(
             int, vol.Range(min=MIN_SCAN_INTERVAL_HOURS, max=MAX_SCAN_INTERVAL_HOURS)
         ),
@@ -85,6 +101,8 @@ class MoretonBayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return await self.async_step_waste()
             if self._mode == MODE_SINGLE_LAYER:
                 return await self.async_step_single()
+            if self._mode == MODE_NEARBY:
+                return await self.async_step_nearby()
             return await self.async_step_all()
         return self.async_show_form(step_id="user", data_schema=MODE_SCHEMA)
 
@@ -156,6 +174,24 @@ class MoretonBayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="single", data_schema=SINGLE_SCHEMA, errors=errors
         )
+
+    async def async_step_nearby(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Create a nearby-status entry using an HA zone."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=f"Moreton Bay nearby — {user_input[CONF_ZONE]}",
+                data={
+                    CONF_MODE: MODE_NEARBY,
+                    CONF_ZONE: user_input[CONF_ZONE],
+                    CONF_RADIUS_KM: user_input[CONF_RADIUS_KM],
+                },
+                options={
+                    CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 6),
+                },
+            )
+        return self.async_show_form(step_id="nearby", data_schema=NEARBY_SCHEMA)
 
 
 class MoretonBayOptionsFlow(config_entries.OptionsFlow):

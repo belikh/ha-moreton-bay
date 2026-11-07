@@ -26,6 +26,14 @@
           "layer_title": "Layer title",
           "scan_interval_hours": "Refresh interval (hours)"
         }
+      },
+      "nearby": {
+        "title": "Nearby status",
+        "data": {
+          "zone": "Zone",
+          "radius_km": "Radius (km)",
+          "scan_interval_hours": "Refresh interval (hours)"
+        }
       }
     },
     "abort": {

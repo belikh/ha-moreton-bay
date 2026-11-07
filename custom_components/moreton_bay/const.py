@@ -10,10 +10,19 @@ CONF_MODE = "mode"
 CONF_ADDRESS = "address"
 CONF_LAYER_TITLE = "layer_title"
 CONF_SCAN_INTERVAL = "scan_interval_hours"
+CONF_ZONE = "zone"
+CONF_RADIUS_KM = "radius_km"
+CONF_ZONE = "zone"
+CONF_RADIUS_KM = "radius_km"
 
 MODE_ALL_LAYERS = "all_layers"
 MODE_WASTE = "waste"
 MODE_SINGLE_LAYER = "single_layer"
+MODE_NEARBY = "nearby"
+MODE_NEARBY = "nearby"
+
+DEFAULT_ZONE = "zone.home"
+DEFAULT_RADIUS_KM = 2.0
 
 DATAHUB_CATALOGUE_URL = (
     "https://datahub.moretonbay.qld.gov.au/api/search/v1/collections/dataset/items"
