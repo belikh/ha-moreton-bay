@@ -2,8 +2,8 @@
 
    <p align="right">
      <picture>
-       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/belikh/design/releases/latest/download/logo-dark.svg">
-       <img alt="jupiter.au" src="https://github.com/belikh/design/releases/latest/download/logo-light.svg" width="260">
+       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/belikh/design/latest/packages/graphics/logo/jupiter-logo-dark.svg">
+       <img alt="jupiter.au" src="https://raw.githubusercontent.com/belikh/design/latest/packages/graphics/logo/jupiter-logo-light.svg" width="260">
      </picture>
    </p>
 
@@ -20,7 +20,7 @@ Home Assistant integration for the City of Moreton Bay, Queensland. It turns dat
 
 .. raw:: html
 
-   <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/belikh/design/releases/latest/download/rule-end-dark.svg"><img alt="" src="https://github.com/belikh/design/releases/latest/download/rule-end-light.svg" width="50%"></picture></p>
+   <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/rule/end-dark.svg"><img alt="" src="https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/rule/end-light.svg" width="50%"></picture></p>
 
 Install
 -------
@@ -126,7 +126,7 @@ The ``hacs`` and ``hassfest`` workflows in ``.github/workflows/`` run the HACS a
 
 .. raw:: html
 
-   <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/belikh/design/releases/latest/download/rule-end-dark.svg"><img alt="" src="https://github.com/belikh/design/releases/latest/download/rule-end-light.svg" width="50%"></picture></p>
+   <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/rule/end-dark.svg"><img alt="" src="https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/rule/end-light.svg" width="50%"></picture></p>
 
 Licence
 -------
@@ -139,63 +139,63 @@ MIT. Data (c) City of Moreton Bay, CC BY 4.0. Unofficial; not endorsed by the co
 
    <p align="right"><sub>jupiter.au</sub></p>
 
-.. |pin-l| image:: https://github.com/belikh/design/releases/latest/download/icon-pin-light.svg#gh-light-mode-only
+.. |pin-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/pin-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |pin-d| image:: https://github.com/belikh/design/releases/latest/download/icon-pin-dark.svg#gh-dark-mode-only
+.. |pin-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/pin-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |home-l| image:: https://github.com/belikh/design/releases/latest/download/icon-home-light.svg#gh-light-mode-only
+.. |home-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/home-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |home-d| image:: https://github.com/belikh/design/releases/latest/download/icon-home-dark.svg#gh-dark-mode-only
+.. |home-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/home-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |check-l| image:: https://github.com/belikh/design/releases/latest/download/icon-check-light.svg#gh-light-mode-only
+.. |check-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/check-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |check-d| image:: https://github.com/belikh/design/releases/latest/download/icon-check-dark.svg#gh-dark-mode-only
+.. |check-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/check-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |database-l| image:: https://github.com/belikh/design/releases/latest/download/icon-database-light.svg#gh-light-mode-only
+.. |database-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/database-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |database-d| image:: https://github.com/belikh/design/releases/latest/download/icon-database-dark.svg#gh-dark-mode-only
+.. |database-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/database-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |calendar-l| image:: https://github.com/belikh/design/releases/latest/download/icon-calendar-light.svg#gh-light-mode-only
+.. |calendar-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/calendar-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |calendar-d| image:: https://github.com/belikh/design/releases/latest/download/icon-calendar-dark.svg#gh-dark-mode-only
+.. |calendar-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/calendar-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |refresh-l| image:: https://github.com/belikh/design/releases/latest/download/icon-refresh-light.svg#gh-light-mode-only
+.. |refresh-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/refresh-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |refresh-d| image:: https://github.com/belikh/design/releases/latest/download/icon-refresh-dark.svg#gh-dark-mode-only
+.. |refresh-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/refresh-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |bell-l| image:: https://github.com/belikh/design/releases/latest/download/icon-bell-light.svg#gh-light-mode-only
+.. |bell-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/bell-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |bell-d| image:: https://github.com/belikh/design/releases/latest/download/icon-bell-dark.svg#gh-dark-mode-only
+.. |bell-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/bell-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |file-l| image:: https://github.com/belikh/design/releases/latest/download/icon-file-light.svg#gh-light-mode-only
+.. |file-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/file-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |file-d| image:: https://github.com/belikh/design/releases/latest/download/icon-file-dark.svg#gh-dark-mode-only
+.. |file-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/file-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |block-l| image:: https://github.com/belikh/design/releases/latest/download/icon-block-light.svg#gh-light-mode-only
+.. |block-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/block-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |block-d| image:: https://github.com/belikh/design/releases/latest/download/icon-block-dark.svg#gh-dark-mode-only
+.. |block-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/block-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
-.. |alert-l| image:: https://github.com/belikh/design/releases/latest/download/icon-alert-light.svg#gh-light-mode-only
+.. |alert-l| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/alert-light.svg#gh-light-mode-only
    :width: 20
    :alt:
-.. |alert-d| image:: https://github.com/belikh/design/releases/latest/download/icon-alert-dark.svg#gh-dark-mode-only
+.. |alert-d| image:: https://raw.githubusercontent.com/belikh/design/latest/packages/github/graphics/icon/alert-dark.svg#gh-dark-mode-only
    :width: 20
    :alt:
