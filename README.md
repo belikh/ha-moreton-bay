@@ -1,64 +1,93 @@
+<p align="right">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/belikh/design/main/packages/graphics/logo/jupiter-logo-dark.svg">
+    <img alt="jupiter.au" src="https://raw.githubusercontent.com/belikh/design/main/packages/graphics/logo/jupiter-logo-light.svg" width="260">
+  </picture>
+</p>
+
 # City of Moreton Bay
 
-Home Assistant integration for the **City of Moreton Bay** — Queensland, Australia.
+Home Assistant integration for the City of Moreton Bay, Queensland. It turns datasets from the council's Datahub into sensors, reports bin collection days for one property, and reports the nearest development application, road closure and emergency site to a zone. It needs no API key.
 
-Everything in here comes from the council's public **Datahub** (ArcGIS Hub,
-Creative Commons Attribution 4.0). Every endpoint is **token-free**: no API
-keys, no add-ons, no MQTT broker.
+<p>
+  <a href="#install">Install</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#entities">Entities</a> ·
+  <a href="#bin-days">Bin days</a> ·
+  <a href="#develop">Develop</a>
+</p>
 
-## What you get
+<br>
 
-- **All Datahub layers** — every published dataset (currently ~85 feature
-  services: waste, road closures, sandbags and evacuation centres, waste
-  facilities, parks, dog beaches, bus stops, planned burns, flood and bushfire
-  overlays, planning zones, and the rest) becomes a sensor showing its
-  feature count and source URL.
-- **Property waste collection days** — given one exact address
-  (e.g. `5 BOTANY CRESCENT BANKSIA BEACH`), sensors/binary sensor answer
-  "next bin collection" and "put bins out tonight?" using the council's
-  `Property Waste Collection Days and Recycle Weeks` feed
-  (216,000+ properties, live-tested).
+---
 
-This is the Moreton Bay counterpart to the Brisbane City Council bin day
-integrations (`mark1foley/Brisbane-Bin-Day-Sensor`, `matterbury/Brisbane-Bin-Day`).
-Unlike those, this one covers every layer the council publishes, not just bins.
+<br>
 
-## Install (HACS)
+## Install
 
-1. Open HACS and add a custom repository:
-   `https://github.com/belikh/ha-moreton-bay` as type **Integration**.
+1. In HACS, add a custom repository: `https://github.com/belikh/ha-moreton-bay`, type **Integration**.
 2. Install **City of Moreton Bay** and restart Home Assistant.
-3. Add the integration:
+3. Go to **Settings > Devices & Services > Add integration** and pick **City of Moreton Bay**.
 
-   - **All Datahub layers** — one sensor per dataset.
-   - **Property waste collection days** — enter the exact `ADDRESS`.
-   - **Single Datahub layer** — enter one dataset title.
+<br>
 
-## Waste address lookup
+## Configuration
 
-The waste feed matches on the council's upper-case `ADDRESS` field exactly.
-Find yours on council's Datahub (`MBRC_Waste`) or via "When are my bins
-collected?" and paste it in.
+Setup is a short wizard.
 
-General waste is weekly; recycling and garden organics alternate fortnightly
-(`WEEK 1` / `WEEK 2`). Public-holiday shifts are not modelled — the council
-publishes them separately.
+| Step | Fields |
+| --- | --- |
+| Zone | Zone (default `zone.home`), radius in km (default 2, 0.1 to 50), refresh interval in hours (default 6, 1 to 48). |
+| Address | Pick a suburb, street and house number from the council's list, or type the address. Leave it empty to use the property at the zone's position. |
+| Confirm | Check the matched address. |
 
-## Development
+Change the refresh interval later under **Configure** on the integration card.
 
-```bash
+<br>
+
+## Entities
+
+| Entity | Type | Meaning |
+| --- | --- | --- |
+| One per Datahub layer | sensor | Number of features in the layer. Attributes: `layer_title`, `source_url`, `feature_count`. |
+| Next bin collection | sensor | Date of the next general waste collection. |
+| Next recycling collection | sensor | Date of the next recycling or garden organics collection. |
+| Put bins out tonight | binary sensor | On when general waste is collected tomorrow. |
+| Recycling out tonight | binary sensor | On when recycling is collected tomorrow. |
+| Development application (nearest) | sensor | Nearest development application within the radius. |
+| Road closure (nearest) | sensor | Nearest road closure within the radius. |
+| Emergency site (nearest) | sensor | Nearest emergency site within the radius. |
+
+The layer list comes from the council's Datahub (`datahub.moretonbay.qld.gov.au`, ArcGIS Hub). It is filtered to datasets that change over time. Datasets whose titles do not match the integration's list of live-data keywords, and historical datasets, are skipped.
+
+<br>
+
+## Bin days
+
+The waste feed is `MBRC_Waste`. It matches the council's upper-case `ADDRESS` field, for example `5 BOTANY CRESCENT BANKSIA BEACH`. General waste is weekly. Recycling and garden organics alternate each fortnight (`WEEK 1` and `WEEK 2`).
+
+> [!NOTE]
+> Public holiday shifts are not modelled. The council publishes them separately.
+
+<br>
+
+## Develop
+
+```sh
 uv sync
 uv run pytest
 uv run ruff check .
 uv run mypy
 ```
 
-hassfest can be run with
-`python -m homeassistant.hassfest` via the script in `.github/workflows/`.
+The `hacs` and `hassfest` workflows in `.github/workflows/` run the HACS and Home Assistant validations on GitHub.
+
+<br>
 
 ## Licence
 
-MIT. Data © City of Moreton Bay, CC-BY 4.0. Unofficial; not endorsed by the council.
+MIT. Data (c) City of Moreton Bay, CC BY 4.0. Unofficial; not endorsed by the council.
 
+<br>
 
-## v0.1.1 — Curated: planning-scheme/LGIP/superseded/historic/notes/basemap layers removed — 83 -> 31 sensors.
+<p align="right"><sub>jupiter.au</sub></p>
